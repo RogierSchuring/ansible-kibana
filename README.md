@@ -1,6 +1,8 @@
 Ansible-Kibana
 =========
 
+[![Build Status](https://travis-ci.org/RogierSchuring/ansible-kibana.svg?branch=master)](https://travis-ci.org/RogierSchuring/ansible-kibana)
+
 Install and upgrade Kibana 6 incl. full configuration file control, x-pack support and logrotate.
 
 Requirements
