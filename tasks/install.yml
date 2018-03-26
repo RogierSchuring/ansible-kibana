@@ -1,0 +1,31 @@
+---
+- name: Check if Kibana package is installed
+  yum:
+    list: kibana{% if kb_version is defined and kb_version != ""  %}-{{ kb_version }}{% endif %}
+  register: kb_is_installed
+
+- name: Add Elastic.co repo
+  template:
+    src: elastic.repo.j2
+    dest: /etc/yum.repos.d/elastic-{{ kb_repo_major_version }}.repo
+  when: kb_use_elastic_repository
+
+- name: Install yum-utils
+  yum:
+    name: yum-utils
+    state: present
+    update_cache: yes
+  when: kb_is_installed.results[0] is undefined
+
+- name: complete yum transactions before package install/upgrade
+  command: yum-complete-transaction --cleanup-only
+  changed_when: false
+  when: kb_is_installed.results[0] is undefined
+
+- name: Install Kibana
+  yum:
+    name: kibana{% if kb_version is defined and kb_version != ""  %}-{{ kb_version }}{% endif %}
+    state: present
+    update_cache: yes
+    allow_downgrade: "{% if kb_allow_downgrade %}yes{% else %}no{% endif %}"
+  register: kibana_install_from_repo

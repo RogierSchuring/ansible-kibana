@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+{{ kb_log_dir }}/kibana.log {
+  compress
+  copytruncate
+{% if kb_logging_delay_compress %}
+  delaycompress
+{% endif %}
+  rotate {{ kb_logging_max_files }}
+  size {{ kb_logging_max_file_size }}
+}

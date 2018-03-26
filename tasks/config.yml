@@ -1,0 +1,51 @@
+---
+#Configure Kibana Node
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kb_user }}"
+    group: "{{ kb_group }}"
+    mode: "{{ kb_dirs_mode }}"
+  with_items:
+    - "{{ kb_pid_dir }}"
+    - "{{ kb_log_dir }}"
+    - "{{ kb_conf_dir }}"
+    - "{{ kb_data_dir }}"
+
+- name: Make sure PID dir is created on reboot
+  copy:
+    content: "d /var/run/kibana 0755 {{ kb_user }} {{ kb_user }} - -"
+    dest: /usr/lib/tmpfiles.d/kibana.conf
+    mode: 0644
+    seuser: system_u
+  when: ansible_distribution in ['RedHat','CentOS'] and ansible_distribution_version | version_compare('7', '>=') and kb_pid_dir | basename != ""
+
+- name: Set User and Group on Home Directory (this can take some time)
+  file: 
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kb_user }}"
+    group: "{{ kb_group }}"
+    recurse: yes
+  with_items:
+    - "{{ kb_home_dir }}"
+
+- name: Copy configuration file
+  template:
+    src: kibana.yml.j2
+    dest: "{{kb_conf_dir}}/kibana.yml"
+    owner: "{{ kb_user }}"
+    group: "{{ kb_group }}"
+    mode: 0644
+  notify:
+  - restart kibana
+
+- name: Copy logrotate file
+  template:
+    src: kibana.logrotate.j2
+    dest: /etc/logrotate.d/kibana
+    owner: root
+    group: root
+    mode: 0644
+  when: kb_logging_manage

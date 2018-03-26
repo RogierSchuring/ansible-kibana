@@ -1,0 +1,28 @@
+---
+- name: Include optional user and group creation.
+  when: (kb_user_id is defined) and (kb_group_id is defined)
+  include_tasks: optional-user.yml
+  tags:
+    - user
+
+- name: Include installation tasks
+  include_tasks: install.yml
+  tags:
+    - install
+
+- name: Include config tasks
+  include_tasks: config.yml
+  tags:
+    - config
+
+- name: Make sure Kibana is started
+  service:
+    name: kibana
+    state: started
+    enabled: yes
+
+# We always execute xpack as we may need to remove features
+- name: Include x-pack tasks
+  include_tasks: xpack.yml
+  tags:
+    - xpack

@@ -1,0 +1,43 @@
+---
+#Check if user and group exist but have wrong uid/gid. if so, try to stop the service before changing uid/gid.
+- name: Get list of users
+  shell: /usr/bin/getent passwd | awk -F":" '{print $1 ":" $3 ":" $4}'
+  check_mode: no
+  register: etc_passwd
+  changed_when: false
+
+- name: Get list of groups
+  shell: /usr/bin/getent group | awk -F":" '{print $1 ":" $3}'
+  check_mode: no
+  register: etc_groups
+  changed_when: false
+
+- name: Check for existing kibana service
+  command: systemctl status kibana
+  check_mode: no
+  register: service_kibana_status
+  failed_when: false
+  changed_when: false
+
+- name: Stop kibana service if user and group exist but have wrong uid or gid and it is running
+  service: name=kibana state=stopped
+  when: service_kibana_status.rc is defined and service_kibana_status.rc == 0 and ((etc_passwd.stdout.find(ls_user) != -1 and not etc_passwd.stdout.find(ls_user_id|string) != -1) or (etc_groups.stdout.find(ls_group) != -1 and not etc_groups.stdout.find(ls_group_id|string) != -1))
+  notify: restart kibana
+
+#Add the kibana user and group now we are sure kibana is not running.
+- name: Ensure optional kibana group is created with the correct id.
+  group:
+    state: present
+    name: "{{ kb_group }}"
+    system: yes
+    gid: "{{ kb_group_id }}"
+
+- name: Ensure optional kibana user is created with the correct id.
+  user:
+    state: present
+    name: "{{ kb_user }}"
+    comment: kibana system user
+    system: yes
+    createhome: no
+    uid: "{{ kb_user_id }}"
+    group: "{{ kb_group }}"

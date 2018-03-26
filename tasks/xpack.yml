@@ -1,0 +1,54 @@
+---
+- name: Set fact kb version changed
+  set_fact: kb_version_changed={{ (kibana_install_from_repo is defined and kibana_install_from_repo.changed) }}
+
+#Test if x-pack is installed
+- name: Get Kibana installed plugin list
+  shell: "{{kb_home_dir}}/bin/kibana-plugin list | grep x-pack"
+  check_mode: no
+  register: x_pack_installed
+  changed_when: False
+  failed_when: "'ERROR' in x_pack_installed.stdout"
+  ignore_errors: yes
+  environment:
+    CONF_DIR: "{{ kb_conf_dir }}"
+
+#Remove X-Pack if installed and its not been requested
+- name: Remove x-pack plugin
+  command: "{{kb_home_dir}}/bin/kibana-plugin remove x-pack"
+  register: xpack_state
+  failed_when: "'ERROR' in xpack_state.stdout"
+  changed_when: xpack_state.rc == 0
+  when: x_pack_installed.rc is defined and x_pack_installed.rc == 0 and (not kb_enable_xpack or kb_version_changed)
+  notify: restart kibana
+  environment:
+    CONF_DIR: "{{ kb_conf_dir }}"
+
+#Set kibana version if kb_version variable is not defined.
+- name: Get installed kibana package information if version is not defined.
+  yum:
+    list: installed
+  register: yum_packages
+  when: kb_version is undefined and x_pack_installed.rc is defined and (x_pack_installed.rc == 1 or kb_version_changed) and kb_enable_xpack
+
+- name: Set version variable
+  set_fact: kb_version={{ item }}
+  with_items: "{{yum_packages|json_query(jsonquery)}}"
+  vars:
+    jsonquery: "results[?name=='kibana'].version"
+  when: yum_packages is defined
+
+#Install plugin if not installed, and its been requested
+- name: Install x-pack plugin
+  command: >
+    {{kb_home_dir}}/bin/kibana-plugin install --silent {% if kb_xpack_url is defined and kb_xpack_url != '' %}{{ kb_xpack_url }}x-pack-{{ kb_version }}.zip{% else %}x-pack{% endif %}
+  register: xpack_state
+  become: yes
+  become_user: "{{ kb_user }}"
+  failed_when: "'ERROR' in xpack_state.stdout"
+  changed_when: xpack_state.rc == 0 or xpack_state.rc == 70
+  when: x_pack_installed.rc is defined and (x_pack_installed.rc == 1 or kb_version_changed) and kb_enable_xpack
+  notify: restart kibana
+  environment:
+    CONF_DIR: "{{ kb_conf_dir }}"
+    NODE_TLS_REJECT_UNAUTHORIZED: "0"
