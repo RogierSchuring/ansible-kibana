@@ -86,8 +86,9 @@ galaxy_info:
     - 7
 
   galaxy_tags:
-    kibana
-    elk
+  - kibana
+  - elk
+  - elastic
 
 dependencies: []
   # List your role dependencies here, one per line.

@@ -1,4 +1,4 @@
-Role Name
+Ansible-Kibana
 =========
 
 Install and upgrade Kibana 6 incl. full configuration file control, x-pack support and logrotate.
