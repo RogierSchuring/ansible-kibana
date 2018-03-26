@@ -3,7 +3,7 @@ services: docker
 
 env:
   - distro: centos7
-  - distro: centos6
+#  - distro: centos6
 #  - distro: ubuntu1604
 #  - distro: ubuntu1404
 #  - distro: ubuntu1204
@@ -21,7 +21,7 @@ script:
   - ${PWD}/tests/test.sh
 
   # Test whether Kibana is running correctly.
-  - 'docker exec --tty ${container_id} env TERM=xterm curl http://localhost:5601/'
+  - 'docker exec --tty ${container_id} env TERM=xterm curl http://127.0.0.1:5601/'
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
