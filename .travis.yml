@@ -14,11 +14,14 @@ script:
   - export cleanup=false
 
   # Download test shim.
-  - wget -O ${PWD}/tests/test.sh https://gist.githubusercontent.com/geerlingguy/73ef1e5ee45d8694570f334be385e181/raw/
+  - wget -O ${PWD}/tests/test.sh https://gist.githubusercontent.com/RogierSchuring/b387d9c8dd3d58422e166a4e419e3e11/raw/
   - chmod +x ${PWD}/tests/test.sh
 
   # Run tests.
   - ${PWD}/tests/test.sh
+
+  # Test whether Kibana is running.
+  - 'docker exec --tty ${container_id} env TERM=xterm service kibana status'
 
   # Test whether Kibana is running correctly.
   #- 'docker exec --tty ${container_id} env TERM=xterm curl http://127.0.0.1:5601/'
