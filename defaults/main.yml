@@ -1,6 +1,6 @@
 ---
 ### Main config settings
-kb_repo_major_version: 6
+kb_repo_major_version: 6.x
 kb_use_elastic_repository: true
 #kb_proxy_host:
 #kb_proxy_port:
