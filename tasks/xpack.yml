@@ -36,7 +36,7 @@
   with_items: "{{yum_packages|json_query(jsonquery)}}"
   vars:
     jsonquery: "results[?name=='kibana'].version"
-  when: yum_packages is defined
+  when: yum_packages is defined and kb_version is undefined and x_pack_installed.rc is defined and (x_pack_installed.rc == 1 or kb_version_changed) and kb_enable_xpack
 
 #Install plugin if not installed, and its been requested
 - name: Install x-pack plugin

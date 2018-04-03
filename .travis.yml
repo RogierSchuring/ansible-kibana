@@ -12,6 +12,7 @@ script:
   # Configure test script so we can run extra tests after playbook is run.
   - export container_id=$(date +%s)
   - export cleanup=false
+  - export additional_test_script=https://gist.githubusercontent.com/RogierSchuring/180c00dcd9c1b2d8b36525d1e598876a/raw/
 
   # Download test shim.
   - wget -O ${PWD}/tests/test.sh https://gist.githubusercontent.com/RogierSchuring/b387d9c8dd3d58422e166a4e419e3e11/raw/
@@ -19,15 +20,6 @@ script:
 
   # Run tests.
   - ${PWD}/tests/test.sh
-
-  # Test whether Kibana is running.
-  - docker exec --tty ${container_id} env TERM=xterm service kibana status
-
-  # Wait for 1 minute for port to become available (kibana is "Optimizing and caching bundles")
-  - sleep 1m
-
-  # Test whether Kibana is running correctly.
-  - docker exec --tty ${container_id} env TERM=xterm curl http://127.0.0.1:5601/
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

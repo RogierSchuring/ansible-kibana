@@ -9,7 +9,6 @@
     mode: "{{ kb_dirs_mode }}"
   with_items:
     - "{{ kb_pid_dir }}"
-    - "{{ kb_log_dir }}"
     - "{{ kb_conf_dir }}"
     - "{{ kb_data_dir }}"
 
@@ -21,8 +20,8 @@
     seuser: system_u
   when: ansible_distribution in ['RedHat','CentOS'] and ansible_distribution_version | version_compare('7', '>=') and kb_pid_dir | basename != ""
 
-- name: Set User and Group on Home Directory (this can take some time)
-  file: 
+- name: Set User and Group on directories and files recursively (this can take some time)
+  file:
     path: "{{ item }}"
     state: directory
     owner: "{{ kb_user }}"
@@ -30,6 +29,27 @@
     recurse: yes
   with_items:
     - "{{ kb_home_dir }}"
+    - "{{ kb_pid_dir }}"
+    - "{{ kb_log_dir }}"
+    - "{{ kb_conf_dir }}"
+    - "{{ kb_data_dir }}"
+
+- name: Create log files for rhel 6 and centos 6 to make role idempotent...
+  file:
+    path: "{{ kb_log_dir }}/{{ item }}"
+    state: touch
+    owner: "{{ kb_user }}"
+    group: "{{ kb_group }}"
+  with_items:
+    - kibana.stderr
+    - kibana.stdout
+  register: touch_log
+  changed_when: touch_log.diff.before.state != "file"
+  when: ansible_distribution in ['RedHat','CentOS'] and ansible_distribution_version | version_compare('7', '<')
+
+- file: path=/var/log/php.log mode=0666 state=touch
+  register: touch_log
+  changed_when: touch_log.diff.before.state != "file"
 
 - name: Copy configuration file
   template:
